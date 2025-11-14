@@ -1,26 +1,56 @@
 // REPL Monitor - runs in page context to access Strudel's REPL
 (function () {
-    console.log('Strudel Enhanced: Monitoring for REPL initialization...');
+    console.log('Strudel Enhanced: Monitoring for editor initialization...');
 
-    // Check for REPL periodically
+    function findCodeMirrorView() {
+        try {
+            // Find the editor element
+            const editor = document.querySelector('.cm-editor');
+            if (!editor) return null;
+
+            // Navigate through React fiber to find the EditorView
+            const parent = editor.parentElement;
+            const fiberKey = Object.keys(parent).find(k => k.startsWith('__reactFiber'));
+            if (!fiberKey) return null;
+
+            const fiber = parent[fiberKey];
+            const parentComponent = fiber.return;
+            if (!parentComponent || !parentComponent.memoizedProps) return null;
+
+            const editorRef = parentComponent.memoizedProps.editorRef;
+            if (!editorRef || !editorRef.current) return null;
+
+            // Get the actual CodeMirror EditorView
+            const cmView = editorRef.current.editor;
+            return cmView;
+        } catch (e) {
+            console.error('Strudel Enhanced: Error finding CodeMirror view:', e);
+            return null;
+        }
+    }
+
+    // Check for editor periodically
     let checkInterval = setInterval(() => {
-        if (window.repl && window.repl.draw) {
-            console.log('Strudel Enhanced: REPL found!');
-            console.log('REPL properties:', Object.keys(window.repl));
+        const cmView = findCodeMirrorView();
+
+        if (cmView) {
+            console.log('Strudel Enhanced: CodeMirror EditorView found!');
+            console.log('Strudel Enhanced: Current code:', cmView.state.doc.toString().substring(0, 50) + '...');
             clearInterval(checkInterval);
 
-            // Try to access CodeMirror view
-            if (window.repl.editor) {
-                console.log('Strudel Enhanced: Found editor!');
-                console.log('Editor type:', window.repl.editor.constructor.name);
-                console.log('Editor properties:', Object.keys(window.repl.editor));
-            }
+            // Store reference globally for the extension to use
+            window.strudelCodeMirrorView = cmView;
 
-            // Store reference for later use
-            window.strudelEditor = window.repl.editor;
+            // Dispatch custom event to notify extension
+            window.dispatchEvent(new CustomEvent('strudelEditorReady', { detail: { view: cmView } }));
         }
     }, 100);
 
     // Stop checking after 10 seconds
-    setTimeout(() => clearInterval(checkInterval), 10000);
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!window.strudelCodeMirrorView) {
+            console.warn('Strudel Enhanced: Could not find CodeMirror view after 10 seconds');
+        }
+    }, 10000);
 })();

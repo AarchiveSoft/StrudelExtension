@@ -19,7 +19,8 @@
         {
             "resources": [
                 "codemirror-extension.js",
-                "syntax-definitions.js"
+                "syntax-definitions.js",
+                "repl-monitor.js"
             ],
             "matches": [
                 "*://strudel.cc/*"

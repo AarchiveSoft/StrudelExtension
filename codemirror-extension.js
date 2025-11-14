@@ -6,73 +6,63 @@
 
     console.log('Strudel Enhanced: Script injected into page context');
 
-    function findCodeMirrorInstance(attempt = 0) {
-        const maxAttempts = 20;
-
-        // Find the editor element
-        const editorElement = document.querySelector('.cm-editor');
-
-        if (!editorElement) {
-            if (attempt < maxAttempts) {
-                setTimeout(() => findCodeMirrorInstance(attempt + 1), 200);
-            }
+    function initializeHighlighting() {
+        // Check if the view is already available
+        if (window.strudelCodeMirrorView) {
+            console.log('Strudel Enhanced: Found existing CodeMirror view');
+            applyHighlighting(window.strudelCodeMirrorView);
             return;
         }
 
-        // Try different ways to access CodeMirror
-        let cmInstance = null;
+        // Otherwise wait for the event
+        console.log('Strudel Enhanced: Waiting for editor ready event...');
+        window.addEventListener('strudelEditorReady', function (event) {
+            console.log('Strudel Enhanced: Editor ready event received!');
+            const cmView = event.detail.view;
 
-        // Method 1: Check element properties
-        for (let key in editorElement) {
-            if (key.startsWith('__')) {
-                console.log('Strudel Enhanced: Found key', key);
+            if (!cmView) {
+                console.error('Strudel Enhanced: No view in event detail');
+                return;
             }
-        }
 
-        // Method 2: Check if it's in a React fiber
-        const reactKey = Object.keys(editorElement).find(key =>
-            key.startsWith('__react') || key.startsWith('_react')
-        );
-
-        if (reactKey) {
-            console.log('Strudel Enhanced: Found React key:', reactKey);
-        }
-
-        // Method 3: Try to access through window
-        if (window.strudelRepl || window.repl) {
-            console.log('Strudel Enhanced: Found Strudel REPL object');
-            const repl = window.strudelRepl || window.repl;
-            console.log('REPL keys:', Object.keys(repl));
-        }
-
-        // For now, just apply CSS-based highlighting
-        applyBasicHighlighting();
+            applyHighlighting(cmView);
+        });
     }
 
-    function applyBasicHighlighting() {
-        console.log('Strudel Enhanced: Applying basic CSS highlighting');
+    function applyHighlighting(view) {
+        console.log('Strudel Enhanced: Applying syntax highlighting to CodeMirror view...');
 
-        // Token styles for syntax highlighting
+        // First, inject CSS styles for syntax highlighting
         const strudelHighlightStyle = `
-      .cm-strudel-keyword { color: #CF6A4C; font-weight: bold; }
-      .cm-strudel-function { color: #89BDFF; }
-      .cm-strudel-effect { color: #99CF50; }
-      .cm-strudel-operator { color: #E8BF6A; font-weight: bold; }
-      .cm-strudel-sample { color: #FF6188; }
-      .cm-strudel-number { color: #A8FF60; }
-      .cm-strudel-string { color: #65B042; }
-      .cm-strudel-comment { color: #7F7F7F; font-style: italic; }
-      .cm-strudel-mininotation { color: #AE81FF; }
-      .cm-strudel-generator { color: #66D9EF; }
+      /* Strudel Syntax Highlighting */
+      .cm-strudel-keyword { color: #CF6A4C !important; font-weight: bold; }
+      .cm-strudel-function { color: #89BDFF !important; }
+      .cm-strudel-effect { color: #99CF50 !important; }
+      .cm-strudel-operator { color: #E8BF6A !important; font-weight: bold; }
+      .cm-strudel-sample { color: #FF6188 !important; }
+      .cm-strudel-number { color: #A8FF60 !important; }
+      .cm-strudel-string { color: #65B042 !important; }
+      .cm-strudel-comment { color: #7F7F7F !important; font-style: italic; }
+      .cm-strudel-mininotation { color: #AE81FF !important; }
+      .cm-strudel-generator { color: #66D9EF !important; }
+      .cm-strudel-method { color: #A6E22E !important; }
     `;
 
-        // Inject styles
         const styleEl = document.createElement('style');
+        styleEl.id = 'strudel-enhanced-styles';
         styleEl.textContent = strudelHighlightStyle;
         document.head.appendChild(styleEl);
+
+        console.log('Strudel Enhanced: CSS styles injected');
+        console.log('Strudel Enhanced: Current document:', view.state.doc.toString().substring(0, 50));
+
+        // For now, we've added the CSS classes
+        // Next step will be to add CodeMirror extensions to actually apply these classes
+
+        console.log('Strudel Enhanced: Syntax highlighting setup complete!');
     }
 
-    // Start looking for CodeMirror
-    findCodeMirrorInstance();
+    // Start initialization
+    initializeHighlighting();
 
 })();
