@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "Strudel Enhanced Editor",
+    "version": "1.0",
+    "description": "Adds syntax highlighting and autocomplete to Strudel",
+    "permissions": [],
+    "content_scripts": [
+        {
+            "matches": [
+                "*://strudel.cc/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "codemirror-extension.js",
+                "syntax-definitions.js"
+            ],
+            "matches": [
+                "*://strudel.cc/*"
+            ]
+        }
+    ]
+}
