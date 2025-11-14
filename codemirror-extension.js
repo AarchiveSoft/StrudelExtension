@@ -32,34 +32,36 @@
     function applyHighlighting(view) {
         console.log('Strudel Enhanced: Applying syntax highlighting to CodeMirror view...');
 
-        // First, inject CSS styles for syntax highlighting
+        // Check if tokenizer is loaded
+        if (!window.StrudelTokenizer) {
+            console.error('Strudel Enhanced: Tokenizer not loaded!');
+            return;
+        }
+
+        // Inject minimal CSS for future use (not actively fighting Strudel's highlighting)
         const strudelHighlightStyle = `
-      /* Strudel Syntax Highlighting */
-      .cm-strudel-keyword { color: #CF6A4C !important; font-weight: bold; }
-      .cm-strudel-function { color: #89BDFF !important; }
-      .cm-strudel-effect { color: #99CF50 !important; }
-      .cm-strudel-operator { color: #E8BF6A !important; font-weight: bold; }
-      .cm-strudel-sample { color: #FF6188 !important; }
-      .cm-strudel-number { color: #A8FF60 !important; }
-      .cm-strudel-string { color: #65B042 !important; }
-      .cm-strudel-comment { color: #7F7F7F !important; font-style: italic; }
-      .cm-strudel-mininotation { color: #AE81FF !important; }
-      .cm-strudel-generator { color: #66D9EF !important; }
-      .cm-strudel-method { color: #A6E22E !important; }
+      /* Strudel Enhanced - Reserved for future custom highlighting */
+      .cm-content .cm-strudel-keyword { color: #CF6A4C; font-weight: bold; }
+      .cm-content .cm-strudel-function { color: #89BDFF; }
+      .cm-content .cm-strudel-effect { color: #99CF50; }
+      .cm-content .cm-strudel-sample { color: #FF6188; }
+      .cm-content .cm-strudel-number { color: #A8FF60; }
+      .cm-content .cm-strudel-string { color: #65B042; }
+      .cm-content .cm-strudel-comment { color: #7F7F7F; font-style: italic; }
+      .cm-content .cm-strudel-generator { color: #66D9EF; }
+      .cm-content .cm-strudel-method { color: #A6E22E; }
     `;
 
-        const styleEl = document.createElement('style');
-        styleEl.id = 'strudel-enhanced-styles';
-        styleEl.textContent = strudelHighlightStyle;
-        document.head.appendChild(styleEl);
+        if (!document.getElementById('strudel-enhanced-styles')) {
+            const styleEl = document.createElement('style');
+            styleEl.id = 'strudel-enhanced-styles';
+            styleEl.textContent = strudelHighlightStyle;
+            document.head.appendChild(styleEl);
+            console.log('Strudel Enhanced: CSS styles injected');
+        }
 
-        console.log('Strudel Enhanced: CSS styles injected');
-        console.log('Strudel Enhanced: Current document:', view.state.doc.toString().substring(0, 50));
-
-        // For now, we've added the CSS classes
-        // Next step will be to add CodeMirror extensions to actually apply these classes
-
-        console.log('Strudel Enhanced: Syntax highlighting setup complete!');
+        console.log('Strudel Enhanced: CSS styles injected (highlighting disabled for now)');
+        console.log('Strudel Enhanced: Ready for autocomplete implementation');
     }
 
     // Start initialization

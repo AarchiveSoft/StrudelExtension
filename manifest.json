@@ -3,6 +3,9 @@
     "name": "Strudel Enhanced Editor",
     "version": "1.0",
     "description": "Adds syntax highlighting and autocomplete to Strudel",
+    "action": {
+        "default_popup": "popup.html"
+    },
     "permissions": [],
     "content_scripts": [
         {
@@ -20,7 +23,10 @@
             "resources": [
                 "codemirror-extension.js",
                 "syntax-definitions.js",
-                "repl-monitor.js"
+                "repl-monitor.js",
+                "strudel-tokenizer.js",
+                "autocomplete-data.js",
+                "autocomplete.js"
             ],
             "matches": [
                 "*://strudel.cc/*"
