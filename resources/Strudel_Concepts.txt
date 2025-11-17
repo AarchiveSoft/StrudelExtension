@@ -1,0 +1,138 @@
+Schlüsselkonzepte
+Patterns: Strudel arbeitet ausschließlich mit Patterns. Ein Pattern ist ein sich wiederholendes Muster, das musikalische Ereignisse über einen bestimmten Zeitraum hinweg erzeugt. Das System basiert auf Zyklen, wobei ein Zyklus die Dauer eines Patterns angibt.
+Mini-Notation: Die Mini-Notation ist die Sprache von Strudel. Sie verwendet Symbole wie < >, [ ], /, *, und @, um komplexe rhythmische und melodische Strukturen zu beschreiben.
+< > gruppiert Patterns und spielt sie nacheinander ab. Beispiel: <bd sd hh> spielt Bassdrum, Snare und Hi-Hat in dieser Reihenfolge.
+[ ] stapelt Patterns und spielt sie gleichzeitig ab. Beispiel: [bd hh] spielt Bassdrum und Hi-Hat gleichzeitig.
+* wiederholt Patterns. Beispiel: bd*4 spielt die Bassdrum viermal pro Zyklus.
+/ teilt Patterns auf. Beispiel: bd/2 spielt die Bassdrum mit halber Geschwindigkeit.
+! wählt Patterns aus einer Liste. Beispiel: bd!2 wählt zwei Patterns nach dem Zufallsprinzip aus.
+@ ändert die Abspielgeschwindigkeit oder verzögert. Beispiel: bd@2 spielt die Bassdrum in doppelter Geschwindigkeit.
+Generative Musik: Strudel ermöglicht es, dynamische und sich ständig verändernde Musik zu kreieren. Funktionen wie sine, perlin, oder rand können verwendet werden, um Parameter wie Lautstärke, Tonhöhe oder Tempo kontinuierlich zu modulieren.
+Annotation der Beispielsongs
+1. "coastline" - Link
+Dieser Song zeigt, wie man komplexe, sich überlagernde Rhythmen und Melodien erzeugt und dabei Patterns mit Effekten moduliert.
+
+samples('github:eddyflux/crate'): Lädt ein externes Sample-Pack von GitHub, das unter dem Namen 'crate' verfügbar ist.
+setcps(.75): Setzt die Geschwindigkeit auf 0.75 Cycles per Second (Zyklen pro Sekunde), was ein langsameres Tempo ergibt.
+let chords = chord("<Bbm9 Fm9>/4").dict('ireal'): Definiert ein Pattern von Akkorden. Die Notation <Bbm9 Fm9>/4 bedeutet, dass die Akkorde in Gruppen von vier Vierteln pro Zyklus gespielt werden. .dict('ireal') ist eine Funktion, die die Akkordnamen in spielbare Noten umwandelt.
+stack( ... ): Stapelt mehrere Patterns, sodass sie gleichzeitig laufen. Dies wird für die Schlagzeug-, Akkord- und Melodie-Patterns verwendet.
+s("bd").struct("<[x*<1 2> [~@3 x]] x>"): Spielt das bd (Bassdrum) Sample ab. .struct(...) wendet eine komplexe rhythmische Struktur an, die von [x*<1 2> [~@3 x]] und x beschrieben wird, um einen vielschichtigen Beat zu erzeugen.
+n("[0 <1 3>]*<2!3 4>").s("hh"): Spielt die Hi-Hat. n(...) wählt die Noten. [0 <1 3>]*<2!3 4> ist eine rhythmische und melodische Mini-Notation, die die Noten 0, 1 und 3 in einem bestimmten Muster spielt, das von den folgenden rhythmischen Modifikatoren beeinflusst wird.
+.mask("<[0 1] 1 1 1>/16"): Wendet eine Maske auf das Pattern an. Die Maske lässt nur bestimmte Teile des Patterns durch, was einen Effekt wie beim Clave-Rhythmus erzeugt. Die Notation <[0 1] 1 1 1>/16 spielt in einem 16-tel-Raster, wobei nur die erste Note des ersten Patterns durchkommt.
+.phaser(4).room(.5): Fügt einen Phaser-Effekt mit einer Frequenz von 4 und einen Hall-Effekt (room) mit einer Stärke von 0.5 hinzu.
+.gain(perlin.range(.6, .9)): Moduliert die Lautstärke (gain) mit einem Perlin-Noise-Pattern, das zufällige, aber sanft fließende Werte zwischen 0.6 und 0.9 erzeugt.
+// "coastline" @by eddyflux
+// @version 1.0
+samples('github:eddyflux/crate')
+setcps(.75)
+let chords = chord("<Bbm9 Fm9>/4").dict('ireal')
+stack(
+  stack( // DRUMS
+    s("bd").struct("<[x*<1 2> [~@3 x]] x>"),
+    s("~ [rim, sd:<2 3>]").room("<0 .2>"),
+    n("[0 <1 3>]*<2!3 4>").s("hh"),
+    s("rd:<1!3 2>*2").mask("<0 0 1 1>/16").gain(.5)
+  ).bank('crate')
+  .mask("<[0 1] 1 1 1>/16".early(.5))
+  , // CHORDS
+  chords.offset(-1).voicing().s("gm_epiano1:1")
+  .phaser(4).room(.5)
+  , // MELODY
+  n("<0!3 1*2>").set(chords).mode("root:g2")
+  .voicing().s("gm_acoustic_bass"),
+  chords.n("[0 <4 3 <2 5>>*2](<3 5>,8)")
+  .anchor("D5").voicing()
+  .segment(4).clip(rand.range(.4,.8))
+  .room(.75).shape(.3).delay(.25)
+  .fm(sine.range(3,8).slow(8))
+  .lpf(sine.range(500,1000).slow(8)).lpq(5)
+  .rarely(ply("2")).chunk(4, fast(2))
+  .gain(perlin.range(.6, .9))
+  .mask("<0 1 1 0>/16")
+)
+.late("[0 .01]*4").late("[0 .01]*2").size(4)
+2. "Waltz #2" (cps function demo) - Link
+Dieses Stück demonstriert die dynamische Modulation des Tempos.
+
+setDefaultVoicings('legacy'): Setzt das Standard-Voicing für Akkorde auf 'legacy', was die Art und Weise der Notenverteilung in Akkorden beeinflusst.
+melody: "<...>" .scale("c4:minor").note().s("gm_oboe:2"): Definiert ein Melodie-Pattern, das mit pickRestart aus einer Liste von Unter-Patterns zufällig ausgewählt wird. .scale("c4:minor") wendet eine c-Moll-Tonleiter an, wodurch alle Noten innerhalb dieser Skala bleiben. s("gm_oboe:2") weist der Melodie den Klang einer Oboe zu.
+tempochanges: cps(sine.segment(32).slow(16).mul(30).add(160).div(60*3)): Dies ist der komplexeste Teil. Es moduliert das Tempo (cps) dynamisch.
+sine: Erzeugt ein Sinuswellen-Pattern, das sanfte, periodische Werte erzeugt.
+.segment(32): Teilt die Sinuswelle in 32 Segmente pro Zyklus.
+.slow(16): Verlangsamt das Pattern auf 1/16 der Normalgeschwindigkeit.
+.mul(30).add(160).div(60*3): Skaliert und verschiebt die Werte der Sinuswelle, um ein Tempo im Bereich von ca. 1.6 bis 3.1 Zyklen pro Sekunde (96 bis 186 BPM) zu erzeugen, und konvertiert dieses auf eine für cps verständliche Zahl.
+all(x=>x.room(0.6)): Wendet den Raum-Effekt (room) mit einer Stärke von 0.6 auf alle aktiven Patterns an.
+// "Waltz #2" (cps function demo)
+// composed @by Dmitri Shostakovich
+// script @by eefano
+setDefaultVoicings('legacy')
+
+melody: "<~@4 0@16 1@7 2@11.5 ~@3.5>".pickRestart([
+  `<4 [2@2 1] [0@4 0 1]@2 [2 0 2] [4@2 5] 4 3 
+    3 [1@2 0] [0b@4 -3 0b]@2 [1 0b 1] [3 4 5] 4b 4>`,
+    "<[9,7] [[8,6]@2 [7,5]] [[6,4]@2 [5,3]] [3,0] [8,6] [[7,5]@2 [6,4]] [6,4]>", 
+  "<[~ [2 ~] [3 ~]] [[4 ~] [4 3] [4 5]] [[3 ~] [3 2] [3 4]] [[2 ~] ~ [4 ~]] > ".sub("<0 0 [0,2]>/4") ])
+      .scale("c4:minor").note().s("gm_oboe:2").gain(0.7)._pianoroll({minMidi:10})
+   
+piano: "<0@28 1@10 0@4>".pickRestart([
+     n("<<0 -1> [4,5]!2>*3").chord("<Cm@10 Fm@4 G@4 Cm@4 Fm@2 Bb@2 Eb Ab>"),
+     n("<3 <[4,5] > ~>*3").chord("<G Ab Cm Ab>")
+          ]).anchor('f2').mode('root').voicing().piano()._pianoroll()
+
+tempochanges: cps(sine.segment(32).slow(16).mul(30).add(160).div(60*3)).gain(0)
+
+all(x=>x
+  //.ribbon(24,16)
+  .room(0.6))
+// @version 1.2
+3. "Pyramid Song (wip)" - link
+Dieses Beispiel demonstriert fortgeschrittene Techniken, darunter benutzerdefinierte Funktionen und komplexe Pattern-Manipulation.
+
+setcps(104/60/4): Stellt das Tempo auf 104 BPM, aber geteilt durch 4, was ein sehr langsames, atmosphärisches Tempo erzeugt.
+const split = register(...): register ist eine der wichtigsten Funktionen dieses Stücks. Sie wird verwendet, um eine neue, benutzerdefinierte Funktion zu definieren, die in diesem Fall split genannt wird. Diese Funktion ist nicht standardmäßig in Strudel enthalten und ermöglicht es dem Programmierer, eine völlig neue Art der Pattern-Verarbeitung zu erschaffen.
+let chr = { ... }: Definiert ein Objekt (chr), das Akkorde als Key-Value-Paare speichert. Dies dient als Nachschlagewerk für die Akkord-Sequenzierung.
+piano: "<...>" .split([0,.5],(x)=>x[0].pickOut(chr).velocity(x[1])): Das Piano-Pattern ist extrem komplex. Es verwendet die benutzerdefinierte split-Funktion, um das Hauptpattern <[i1 i2 i3 i4] ooooh ...> aufzuteilen und zu verarbeiten. [0, .5] sind die Werte, die für die Verarbeitung übergeben werden. Die Funktion verwendet .pickOut(chr) um Noten aus dem chr-Objekt basierend auf den in der Notation definierten Keys (z.B. X, Y, Z) auszuwählen. velocity(x[1]) verwendet den zweiten Wert 0.5 der split-Funktion, um die Anschlagsstärke der Noten zu bestimmen.
+ooooh: "<~ 0 ~@4 0@2 ~@8>/8" ... .penv(x[1]).patt(0.04).s("triangle")...: Dieses Pattern erzeugt einen atmosphärischen Synthesizer-Sound. .s("triangle") wählt einen einfachen Dreieckswellen-Synth.
+.penv(x[1]): Steuert die Hüllkurve (Anschlag, Sustain, Decay). x[1] ist hier wieder der Wert aus der split-Funktion, was zeigt, wie die Notenhülle dynamisch gesteuert wird.
+.vmod(.1).vib(5): Fügt einen Vibrato-Effekt mit einer Stärke von 0.1 und einer Frequenz von 5 hinzu.
+// "Pyramid Song (wip)"
+// song @by Radiohead
+// script @by eefano
+setcps(104/60/4)
+const split = register('split', (deflt, callback, pat) => callback(deflt.map((d,i)=> pat.withValue((v)=>{
+  const isobj = v.value !== undefined; const value = isobj ? v.value : v;
+  const result = Array.isArray(value)?(i<value.length?value[i]:d):(i==0?value:d);
+  return (i==0 && isobj) ? {...v,value:result} : result; }))));
+
+let chr = {X:"f#2,c#3,a#3,c#4,f#4", Y:"g2,d3,b3,d4,f#4", Z:"a2,e3,a3,c#4,f#4", J:"g2,d3,b3,d4,g4", K:"f#2,c#3,a#3,c#4,g4",
+           V:"f#2,c#3,a3,c#4,f#4", W:"e2,b2,g#3,b3,f#4"}
+
+piano: "<[i1 i2 i3 i4] ooooh [v1 v2]!4 ooooh@2 [v1 v2]!3 [v1 v3] [v3 v2] [i1 i2 i3 i2] [i3 i2 i3 i2] end>/8".pickRestart(
+ {i1:`<[[X:.6 X:.8]@3 Y:.5@2 [Z:.5 Z:.5]@3]>/2`, i2: `<[[Z:.4 Y:.4]@3 Y:.3@2 [J:.6 J:.9]@3]>/2`, 
+  i3:`<[[K:.8 X:.6]@3 Y:.5@2 [Z:.5 Z:.5]@3]>/2`, i4: `<[[Z:.4 Y:.4]@3 Y:.4@2 [Y:.4 Y:.7]@3]>/2`,
+  ooooh:`<[[X X]@3 Y@2 [Z Z]@3] [[Z Y]@3 Y@2 [X X]@3] [[X X]@3 Y@2 [Z Z]@3] [[Z Y]@3 Y@2 [Y Y]@3]>/2`,
+  v1:`<[[X X]@3 Y@2 [Z Z]@3] [[Z Y]@3 Y@2 [X X]@3]>/2`,
+  v2:`<[[V V]@3 W@2 [W W]@3] [[Y Y]@3 Y@2 [Y Y]@3]>/2`,
+  v3:`<[[V V]@3 W@2 [W W]@3] [[Y Y]@3 X@2 [X X]@3]>/2`,
+  end:`<X:1>/8`, 
+ }).split([0,.5],(x)=>x[0].pickOut(chr).velocity(x[1])).note().piano().gain(0.8).room(.6)
+
+ooooh: "<~ 0 ~@4 0@2 ~@8>/8".pickRestart([
+  "<f#5@11 e5:-2 g#5:4 e5:-4 [f#5:2 ~] [~ g#5 e5] f#5@4 g#5 f#5 e5 d5 c#5@5 ~@3>*4"
+  ]).split([0,0],(x)=>x[0].penv(x[1])).patt(0.04).s("triangle").attack(.08).release(.08).note().vmod(.1).vib(5).gain(0.3).lpf(2000).room(1.5)
+
+drums: "<~@6 [~@15 0@15 1@2] [2,3]@8 3>/8".pick([
+  "<[bd,rd] ~ [~ sf*3] [bd,rd] ~ [~ sf*3] [bd,rd] ~ ~ [~ sf*3] [bd,rd] ~ [~ sf*3] [bd,rd] ~ [~ sf*3]>*8",
+  "<[sd sf bd] [sf sd sd]>*4",
+  "<[rd*4],[<~ ~ ~ bd ~ bd ~ ~ bd ~ bd ~ ~ bd ~ bd> <~!14 sf!2> <~ sd bd ~ sd ~ sd bd ~ sd ~ ~ sd ~ sd sd>]*4>",
+  "<cr,bd>/8",
+]).pickOut({
+  bd: s('bd').bank('Linn9000').lpf(1000),
+  sd: s('sd').bank('RolandMT32').velocity(.5),
+  sf: s('sd').bank('RolandMT32').velocity(.2),
+  rd: s('rd').bank('Linn9000').velocity(0.3).hpf(8000),
+  mt: s('mt').bank('RolandMT32'),
+  lt: s('lt').bank('RolandMT32'),
+  cr: s('cr').bank('Linn9000').speed(0.4).velocity(0.3).hpf(4000),
+}).room(.2).gain(0.5)
+// @version 1.2

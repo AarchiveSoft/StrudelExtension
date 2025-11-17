@@ -263,14 +263,49 @@
         // Only replace the last part (after the dot)
         const startPos = cursorPos - lastPart.length;
 
+        // Special case for stack function - needs multi-line formatting
+        if (item.label === 'stack') {
+            const insertText = 'stack(\n    \n)';
+            const cursorOffset = 'stack(\n    '.length; // Position cursor on the empty middle line
+
+            currentView.dispatch({
+                changes: {
+                    from: startPos,
+                    to: cursorPos,
+                    insert: insertText
+                },
+                selection: { anchor: startPos + cursorOffset }
+            });
+
+            hidePopup();
+            return;
+        }
+
+        // Check if this item should get parentheses
+        const needsParens = item.detail && (
+            item.detail.includes('(') ||
+            item.detail.includes('function') ||
+            item.detail.includes('method') ||
+            item.detail.includes('effect') ||
+            // Also check the label type - anything that's not a sample shortcut or keyword
+            window.StrudelAutocomplete.patternFunctions.includes(item) ||
+            window.StrudelAutocomplete.effects.includes(item) ||
+            window.StrudelAutocomplete.patternMethods.includes(item) ||
+            window.StrudelAutocomplete.harmonyFunctions.includes(item) ||
+            window.StrudelAutocomplete.generators.includes(item)
+        );
+
+        const insertText = needsParens ? item.label + '()' : item.label;
+        const cursorOffset = needsParens ? item.label.length + 1 : item.label.length; // +1 puts cursor inside ()
+
         // Insert the completion
         currentView.dispatch({
             changes: {
                 from: startPos,
                 to: cursorPos,
-                insert: item.label
+                insert: insertText
             },
-            selection: { anchor: startPos + item.label.length }
+            selection: { anchor: startPos + cursorOffset }
         });
 
         hidePopup();

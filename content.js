@@ -8,8 +8,17 @@ function injectMonitor() {
     (document.head || document.documentElement).appendChild(script);
 }
 
+// Inject template bridge
+function injectTemplateBridge() {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('template-bridge.js');
+    (document.head || document.documentElement).appendChild(script);
+    console.log('Strudel Enhanced Editor: Template bridge injected');
+}
+
 // Inject immediately
 injectMonitor();
+injectTemplateBridge();
 
 // Wait for CodeMirror to be available
 function waitForCodeMirror() {
@@ -61,28 +70,15 @@ waitForCodeMirror();
 // Listen for template insertion messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'insertTemplate') {
-        insertTemplateIntoEditor(request.code);
+        console.log('Content script: Received template insertion request');
+
+        // Forward to page context via postMessage
+        window.postMessage({
+            type: 'STRUDEL_INSERT_TEMPLATE',
+            code: request.code
+        }, '*');
+
         sendResponse({ success: true });
     }
     return true;
 });
-
-function insertTemplateIntoEditor(code) {
-    // Get the CodeMirror view
-    if (!window.strudelCodeMirrorView) {
-        console.error('Strudel Enhanced: CodeMirror view not available');
-        return;
-    }
-
-    const view = window.strudelCodeMirrorView;
-    const cursorPos = view.state.selection.main.head;
-
-    // Insert the template at cursor position
-    view.dispatch({
-        changes: {
-            from: cursorPos,
-            insert: code
-        },
-        selection: { anchor: cursorPos + code.length }
-    });
-}

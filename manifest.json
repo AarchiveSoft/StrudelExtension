@@ -26,7 +26,8 @@
                 "repl-monitor.js",
                 "strudel-tokenizer.js",
                 "autocomplete-data.js",
-                "autocomplete.js"
+                "autocomplete.js",
+                "template-bridge.js"
             ],
             "matches": [
                 "*://strudel.cc/*"
